@@ -1,0 +1,26 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[functions]
+  directory = "netlify/functions"
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
+[[redirects]]
+  from = "http://supplementsafetybible.com/*"
+  to = "https://supplementsafetybible.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.supplementsafetybible.com/*"
+  to = "https://supplementsafetybible.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

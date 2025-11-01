@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Subscription Flow</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0051cc;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .log {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log div {
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid #0070f3;
+    }
+    .error {
+      border-left-color: #ff0000 !important;
+      color: #ff0000;
+    }
+    .success {
+      border-left-color: #00cc00 !important;
+      color: #00cc00;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Subscription Test Tool</h1>
+
+  <div class="section">
+    <h2>Step 1: Login</h2>
+    <input type="email" id="email" placeholder="Email" value="test@example.com">
+    <input type="password" id="password" placeholder="Password" value="password123">
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <button onclick="logout()">Logout</button>
+    <p id="authStatus">Not logged in</p>
+  </div>
+
+  <div class="section">
+    <h2>Step 2: Test Checkout</h2>
+    <select id="priceId">
+      <option value="price_1SJJL4LSpIuKqlsUgNBSE8ZV">Starter ($0/mo)</option>
+      <option value="price_1SJJQtLSpIuKqlsUhZdEPJ3L">Professional ($9.99/mo)</option>
+      <option value="price_1SJJXgLSpIuKqlsUa5rP1xbE">Premium ($29.99/mo)</option>
+    </select>
+    <button onclick="testCheckout()" id="checkoutBtn" disabled>Test Checkout</button>
+  </div>
+
+  <div class="section">
+    <h2>Console Logs</h2>
+    <div id="logs" class="log"></div>
+  </div>
+
+  <script type="module">
+    const SUPABASE_URL = 'https://jggzgdrivlamjwwsvdow.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZ3pnZHJpdmxhbWp3d3N2ZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTY0MzYsImV4cCI6MjA3NjI3MjQzNn0.shgnllEtoSdOnEzS8LqbX0xfXdcz8illzCRaOND9lgE';
+    const STRIPE_KEY = 'pk_live_51RyLMELSpIuKqlsUbSSu5SbIhBn7R93T9MlkmbZ8pWv8m2HHKoaiZ0xAwCMcOQvBp073eOKLXQzUZSVuxRDXIERq000D3OJrF3';
+
+    const stripe = Stripe(STRIPE_KEY);
+    let currentUser = null;
+    let currentSession = null;
+
+    function log(message, type = 'info') {
+      const logs = document.getElementById('logs');
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logs.appendChild(div);
+      logs.scrollTop = logs.scrollHeight;
+      console.log(message);
+    }
+
+    async function signup() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      log('Signing up...');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.user) {
+          currentUser = data.user;
+          currentSession = data.session;
+          log('✅ Signup successful!', 'success');
+          updateAuthStatus();
+        } else {
+          log(`❌ Signup failed: ${data.error_description || data.msg}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Signup error: ${error.message}`, 'error');
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      log('Logging in...');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.user) {
+          currentUser = data.user;
+          currentSession = data;
+          log('✅ Login successful!', 'success');
+          updateAuthStatus();
+        } else {
+          log(`❌ Login failed: ${data.error_description || data.msg}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Login error: ${error.message}`, 'error');
+      }
+    }
+
+    async function logout() {
+      currentUser = null;
+      currentSession = null;
+      log('Logged out');
+      updateAuthStatus();
+    }
+
+    function updateAuthStatus() {
+      const status = document.getElementById('authStatus');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+
+      if (currentUser) {
+        status.textContent = `✅ Logged in as ${currentUser.email}`;
+        status.style.color = 'green';
+        checkoutBtn.disabled = false;
+      } else {
+        status.textContent = '❌ Not logged in';
+        status.style.color = 'red';
+        checkoutBtn.disabled = true;
+      }
+    }
+
+    async function testCheckout() {
+      if (!currentSession) {
+        log('❌ Not logged in!', 'error');
+        return;
+      }
+
+      const priceId = document.getElementById('priceId').value;
+
+      log(`Testing checkout for price: ${priceId}`);
+      log(`User ID: ${currentUser.id}`);
+      log(`Access Token: ${currentSession.access_token.substring(0, 20)}...`);
+
+      try {
+        const url = `${SUPABASE_URL}/functions/v1/stripe-checkout`;
+        log(`Calling: ${url}`);
+
+        const body = {
+          price_id: priceId,
+          mode: 'subscription',
+          success_url: `${window.location.origin}/success`,
+          cancel_url: `${window.location.origin}/pricing`
+        };
+
+        log(`Request body: ${JSON.stringify(body, null, 2)}`);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        log(`Response status: ${response.status}`);
+
+        const responseText = await response.text();
+        log(`Response: ${responseText}`);
+
+        if (response.ok) {
+          const data = JSON.parse(responseText);
+          log(`✅ Session created: ${data.sessionId}`, 'success');
+          log(`Redirecting to Stripe checkout...`, 'success');
+
+          const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+
+          if (result.error) {
+            log(`❌ Stripe redirect error: ${result.error.message}`, 'error');
+          }
+        } else {
+          log(`❌ Checkout failed: ${responseText}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Make functions global
+    window.signup = signup;
+    window.login = login;
+    window.logout = logout;
+    window.testCheckout = testCheckout;
+
+    // Initial status
+    updateAuthStatus();
+
+    log('Test tool loaded. Please login first, then test checkout.');
+  </script>
+</body>
+</html>

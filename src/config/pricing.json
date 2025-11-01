@@ -1,0 +1,98 @@
+{
+  "plans": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "tagline": "Start here — no card required",
+      "monthly_price": 0,
+      "yearly_price": 0,
+      "currency": "USD",
+      "stripe_price_id_monthly": null,
+      "stripe_price_id_yearly": null,
+      "cta_text": "Start Free",
+      "features": [
+        "5 interaction checks per month",
+        "Basic supplement safety alerts",
+        "Access the public safety index",
+        "Limited supplement guidance",
+        "Email support (48–72h)"
+      ],
+      "highlight": false
+    },
+    {
+      "id": "pro",
+      "name": "Professional",
+      "tagline": "Most Popular",
+      "monthly_price": 9.99,
+      "yearly_price": 99.99,
+      "currency": "USD",
+      "stripe_price_id_monthly": "price_PRO_MONTHLY_LIVE",
+      "stripe_price_id_yearly": "price_PRO_YEARLY_LIVE",
+      "cta_text": {
+        "monthly": "Upgrade to Pro",
+        "yearly": "Upgrade to Pro — Yearly"
+      },
+      "features": [
+        "Unlimited supplement interaction checks",
+        "AI-powered supplement safety insights",
+        "Personalized risk flags by age & conditions",
+        "Family profiles (up to 3 people)",
+        "PDF report downloads & history",
+        "Priority support (24–48 h)"
+      ],
+      "highlight": true
+    },
+    {
+      "id": "premium",
+      "name": "Premium",
+      "tagline": "Best Value",
+      "monthly_price": 29.99,
+      "yearly_price": 239,
+      "currency": "USD",
+      "stripe_price_id_monthly": "price_PREMIUM_MONTHLY_LIVE",
+      "stripe_price_id_yearly": "price_PREMIUM_YEARLY_LIVE",
+      "cta_text": {
+        "monthly": "Go Premium",
+        "yearly": "Go Premium — Yearly"
+      },
+      "features": [
+        "Everything in Pro",
+        "Advanced explanations & safer alternatives",
+        "Up to 6 family members",
+        "Export to CSV & shareable links",
+        "Early access to new safety models",
+        "Priority same-day support"
+      ],
+      "highlight": true
+    },
+    {
+      "id": "guide",
+      "name": "Supplement Safety Bible — Digital Edition",
+      "tagline": "One-time purchase",
+      "monthly_price": 4.99,
+      "yearly_price": 4.99,
+      "currency": "USD",
+      "stripe_price_id_monthly": "price_GUIDE_ONETIME_LIVE",
+      "stripe_price_id_yearly": "price_GUIDE_ONETIME_LIVE",
+      "cta_text": "Get the Guide",
+      "features": [
+        "Doctor-ready interaction notes",
+        "Printable checklists",
+        "Lifetime access, free updates",
+        "Offline-ready PDF download"
+      ],
+      "highlight": false
+    }
+  ],
+  "toggle_labels": {
+    "monthly": "Monthly",
+    "yearly": "Yearly (Save 20%)"
+  },
+  "ui_labels": {
+    "most_popular": "Most Popular",
+    "best_value": "Best Value",
+    "free_ribbon": "Start here — no card required",
+    "guarantee": "14-day money-back guarantee",
+    "secure_checkout": "Stripe Secure • Cancel anytime • Works on mobile"
+  }
+}

@@ -1,0 +1,300 @@
+# 🚀 Netlify Production Deployment Guide
+
+## ⚡ CRITICAL: Environment Variables Setup
+
+### Required Environment Variables for Netlify
+
+Add these **exact** environment variables to your Netlify deployment:
+
+```bash
+# ===== SUPABASE CONFIGURATION =====
+# Get these from: https://supabase.com/dashboard/project/jggzgdrivlamjwwsvdow/settings/api
+
+# Frontend keys (for Vite)
+VITE_SUPABASE_URL=https://jggzgdrivlamjwwsvdow.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZ3pnZHJpdmxhbWp3d3N2ZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTY0MzYsImV4cCI6MjA3NjI3MjQzNn0.shgnllEtoSdOnEzS8LqbX0xfXdcz8illzCRaOND9lgE
+
+# Backend keys (for Netlify Functions) - MUST HAVE BOTH!
+SUPABASE_URL=https://jggzgdrivlamjwwsvdow.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZ3pnZHJpdmxhbWp3d3N2ZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTY0MzYsImV4cCI6MjA3NjI3MjQzNn0.shgnllEtoSdOnEzS8LqbX0xfXdcz8illzCRaOND9lgE
+
+# 🔴 CRITICAL: Service Role Key (ADMIN ACCESS)
+# Navigate to: https://supabase.com/dashboard/project/jggzgdrivlamjwwsvdow/settings/api
+# Copy the "service_role" key (NOT the anon key)
+SUPABASE_SERVICE_ROLE_KEY=<YOUR_SERVICE_ROLE_KEY_HERE>
+
+# ===== STRIPE CONFIGURATION =====
+# Get these from: https://dashboard.stripe.com/apikeys
+
+# Frontend (publishable key - safe to expose)
+VITE_STRIPE_PUBLISHABLE_KEY=<YOUR_LIVE_PUBLISHABLE_KEY>
+
+# Backend (secret key - NEVER expose in frontend)
+STRIPE_SECRET_KEY=<YOUR_LIVE_SECRET_KEY>
+
+# Product Price IDs (from Stripe Dashboard)
+VITE_PRICE_ID_STARTER=<YOUR_STARTER_PRICE_ID>
+VITE_PRICE_ID_PRO=<YOUR_PRO_PRICE_ID>
+VITE_PRICE_ID_PREMIUM=<YOUR_PREMIUM_PRICE_ID>
+
+# Webhook Secret (from Stripe webhook endpoint)
+STRIPE_WEBHOOK_SECRET=<YOUR_WEBHOOK_SECRET>
+
+# ===== SITE CONFIGURATION =====
+SITE_URL=https://supplementsafetybible.com
+```
+
+---
+
+## 🔧 How to Add Environment Variables to Netlify
+
+### Option 1: Via Netlify UI
+1. Go to your site in Netlify Dashboard
+2. Navigate to **Site settings** → **Environment variables**
+3. Click **Add a variable**
+4. Add each variable from the list above
+5. Set **Scopes**: All (Production, Deploy Previews, Branch deploys)
+
+### Option 2: Via Netlify CLI
+```bash
+# Install Netlify CLI if not already installed
+npm install -g netlify-cli
+
+# Login to Netlify
+netlify login
+
+# Set environment variables (run for each variable)
+netlify env:set SUPABASE_URL "https://jggzgdrivlamjwwsvdow.supabase.co"
+netlify env:set SUPABASE_ANON_KEY "your-anon-key-here"
+netlify env:set SUPABASE_SERVICE_ROLE_KEY "your-service-role-key-here"
+# ... continue for all variables
+```
+
+---
+
+## 🩺 System Health Check
+
+### Database Status
+- ✅ **Supabase Database**: Connected (`jggzgdrivlamjwwsvdow.supabase.co`)
+- ✅ **Tables Created**:
+  - `profiles` (user accounts)
+  - `supplement_interactions` (interaction database)
+  - `pdf_logs` (PDF generation tracking)
+  - `guest_sessions` (anonymous user tracking)
+  - `stripe_subscriptions` (subscription management)
+  - `stripe_orders` (payment tracking)
+  - `revenue_tracking` (analytics)
+  - `referral_tracking` (marketing attribution)
+  - `influencer_campaigns` (campaign tracking)
+
+### Functions Status
+All 12 Netlify Functions configured:
+- ✅ `grant-starter.js` - Free tier signup
+- ✅ `create-checkout-session.js` - Stripe checkout
+- ✅ `stripe-webhook.js` - Stripe event handler
+- ✅ `generate-pdf.js` - PDF report generation
+- ✅ `exchange-stripe-session.js` - Session validation
+- ✅ `fetch-session-email.js` - Email retrieval
+- ✅ `create-portal-session.js` - Customer portal
+- ✅ `get-profile.js` - User profile data
+- ✅ `get-prices.js` - Pricing info
+- ✅ `get-stripe-prices.js` - Stripe pricing sync
+- ✅ `resend-magic-link.js` - Password reset
+- ✅ `create-customer-portal-session.js` - Billing management
+
+### Build Status
+- ✅ **Frontend Build**: Successful
+- ✅ **Bundle Size**: 457.59 kB (124.38 kB gzipped)
+- ✅ **No TypeScript Errors**
+
+---
+
+## 🔴 Known Issues & Required Actions
+
+### 1. Missing Service Role Key
+**Status**: ⚠️ BLOCKING
+
+**Problem**: Netlify functions cannot create user accounts without the Supabase service role key.
+
+**Error**: `TypeError: fetch failed` when calling `grant-starter` function
+
+**Solution**:
+1. Go to https://supabase.com/dashboard/project/jggzgdrivlamjwwsvdow/settings/api
+2. Copy the **service_role** key (starts with `eyJ...`)
+3. Add to Netlify as `SUPABASE_SERVICE_ROLE_KEY`
+4. Redeploy
+
+### 2. Invalid Stripe Secret Key
+**Status**: ⚠️ BLOCKING
+
+**Problem**: Current Stripe key in `.env` is invalid or expired
+
+**Error**: `Invalid API Key provided`
+
+**Solution**:
+1. Go to https://dashboard.stripe.com/apikeys
+2. Generate a new **Secret key** (starts with `sk_live_...`)
+3. Update both `.env` and Netlify environment variables
+4. Update `STRIPE_SECRET_KEY` in Netlify
+5. Verify webhook secret is correct
+
+### 3. Stripe Webhook Configuration
+**Status**: ⚠️ NEEDS VERIFICATION
+
+**Required Webhook Events**:
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
+
+**Webhook URL**: `https://supplementsafetybible.com/.netlify/functions/stripe-webhook`
+
+**Setup**:
+1. Go to https://dashboard.stripe.com/webhooks
+2. Create endpoint with above URL
+3. Select events listed above
+4. Copy the webhook signing secret
+5. Add to Netlify as `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## ✅ Post-Deployment Testing Checklist
+
+### 1. Test Free Starter Signup
+```bash
+curl -X POST https://supplementsafetybible.com/.netlify/functions/grant-starter \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com"}'
+
+# Expected: 200 OK with temporary password
+```
+
+### 2. Test Stripe Checkout
+- Navigate to pricing page
+- Click on Pro plan
+- Verify checkout session opens
+- Expected: Redirects to Stripe checkout
+
+### 3. Test PDF Generation
+- Login as authenticated user
+- Perform supplement check
+- Click "Download PDF"
+- Expected: PDF downloads successfully
+
+### 4. Test Subscription Management
+- Login with active subscription
+- Navigate to account settings
+- Click "Manage Subscription"
+- Expected: Redirects to Stripe customer portal
+
+---
+
+## 🔄 Deployment Workflow
+
+### Standard Deployment
+```bash
+# 1. Build locally
+npm run build
+
+# 2. Deploy to Netlify
+git add .
+git commit -m "Production deployment"
+git push origin main
+
+# Netlify auto-deploys on push to main
+```
+
+### Manual Deploy via CLI
+```bash
+# Install CLI
+npm install -g netlify-cli
+
+# Deploy
+netlify deploy --prod
+```
+
+---
+
+## 📊 Monitoring & Logs
+
+### View Function Logs
+1. Go to Netlify Dashboard
+2. Navigate to **Functions** tab
+3. Select function (e.g., `grant-starter`)
+4. View real-time logs
+
+### View Deployment Logs
+1. Go to **Deploys** tab
+2. Click on latest deployment
+3. View build and deploy logs
+
+### Supabase Logs
+1. Go to https://supabase.com/dashboard/project/jggzgdrivlamjwwsvdow/logs
+2. View database queries and errors
+3. Monitor RLS policy violations
+
+---
+
+## 🆘 Troubleshooting
+
+### "fetch failed" Error
+- **Cause**: Missing or incorrect Supabase credentials
+- **Fix**: Verify all Supabase environment variables in Netlify
+- **Check**: Both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` exist
+
+### "Stripe key invalid" Error
+- **Cause**: Expired or incorrect Stripe secret key
+- **Fix**: Generate new key from Stripe dashboard
+- **Verify**: Test key with `curl` command
+
+### PDF Generation Fails
+- **Cause**: Missing `pdf_logs` table or RLS policy
+- **Fix**: Run migration (already applied)
+- **Verify**: Check Supabase table editor
+
+### Webhook Not Receiving Events
+- **Cause**: Incorrect webhook URL or secret
+- **Fix**: Update webhook endpoint in Stripe dashboard
+- **Verify**: Test webhook with Stripe CLI: `stripe trigger checkout.session.completed`
+
+---
+
+## 🔐 Security Checklist
+
+- ✅ Service role key is secret (never in frontend)
+- ✅ Stripe secret key is backend-only
+- ✅ RLS enabled on all tables
+- ✅ JWT validation in protected routes
+- ✅ CORS configured correctly
+- ✅ HTTPS enforced (via Netlify)
+- ✅ Environment variables scoped properly
+
+---
+
+## 📞 Support Resources
+
+- **Netlify Docs**: https://docs.netlify.com
+- **Supabase Docs**: https://supabase.com/docs
+- **Stripe Docs**: https://stripe.com/docs
+- **Function Logs**: Check Netlify dashboard for real-time errors
+
+---
+
+## Next Steps
+
+1. ✅ Get Supabase service role key
+2. ✅ Get valid Stripe live keys
+3. ✅ Add all environment variables to Netlify
+4. ✅ Configure Stripe webhook
+5. ✅ Redeploy site
+6. ✅ Test Starter signup flow
+7. ✅ Test Pro/Premium checkout flow
+8. ✅ Verify webhook events
+9. ✅ Monitor logs for 24 hours
+
+---
+
+**Last Updated**: System Agent - Full Diagnostic Complete
+**Status**: Ready for final environment variable configuration

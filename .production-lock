@@ -1,0 +1,12 @@
+# Production Configuration Lock
+# v1.0 - Locked at 2025-10-18 10:02 UTC
+
+PRODUCTION=true
+VERSION=1.0.0
+LOCKED_FILES=src/config/plans.json,netlify.toml,.env
+DEPLOYMENT_HASH=index-vr_A82QM.js
+SUPABASE_PROJECT=jggzgdrivlamjwwsvdow
+NETLIFY_SITE=ornate-gnome-8327fb
+
+# Critical files locked for production
+# To modify, create a new version branch

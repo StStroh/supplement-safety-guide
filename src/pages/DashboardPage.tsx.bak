@@ -1,0 +1,205 @@
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Shield, BookOpen, FileText, Users, Settings } from 'lucide-react'
+import { useSubscription } from '../hooks/useSubscription'
+import { Button } from '../components/ui/Button'
+import { Alert } from '../components/ui/Alert'
+
+export function DashboardPage() {
+  const { subscription, getCurrentPlan, isActive, loading } = useSubscription()
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  const currentPlan = getCurrentPlan()
+
+  const handleManageSubscription = async () => {
+    if (!subscription?.stripe_customer_id) {
+      alert('No customer ID found')
+      return
+    }
+
+    setPortalLoading(true)
+
+    try {
+      const response = await fetch('/.netlify/functions/create-customer-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId: subscription.stripe_customer_id,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        console.error('Portal error:', data.error)
+        alert(`Failed to open portal: ${data.error}`)
+        return
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('Error opening portal:', error)
+      alert('An unexpected error occurred. Please try again.')
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Welcome to your supplement safety dashboard
+          </p>
+        </div>
+
+        {/* Current Plan Status */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Current Plan</h2>
+          {currentPlan ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">{currentPlan.name}</h3>
+                <p className="text-gray-600">{currentPlan.description}</p>
+                <div className="mt-2">
+                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                    isActive() 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {isActive() ? 'Active' : subscription?.subscription_status || 'Inactive'}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-gray-900">
+                  ${currentPlan.price}
+                  {currentPlan.mode === 'subscription' && (
+                    <span className="text-sm text-gray-500 font-normal">/month</span>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  {subscription?.stripe_customer_id && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleManageSubscription}
+                      loading={portalLoading}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Manage Subscription
+                    </Button>
+                  )}
+                  <Link to="/pricing">
+                    <Button variant="outline" size="sm">
+                      Change Plan
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Alert type="info">
+              <div className="flex items-center justify-between">
+                <span>No active subscription found.</span>
+                <Link to="/pricing">
+                  <Button size="sm">
+                    Choose a Plan
+                  </Button>
+                </Link>
+              </div>
+            </Alert>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">Safety Check</h3>
+                <p className="text-sm text-gray-600">Check supplement interactions</p>
+              </div>
+            </div>
+            <Button className="w-full mt-4" disabled>
+              Coming Soon
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <div className="bg-green-100 p-3 rounded-lg">
+                <BookOpen className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">Safety Guide</h3>
+                <p className="text-sm text-gray-600">Browse safety database</p>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full mt-4" disabled>
+              Coming Soon
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <FileText className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">Reports</h3>
+                <p className="text-sm text-gray-600">Generate PDF reports</p>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full mt-4" disabled>
+              Coming Soon
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <Users className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">Consultation</h3>
+                <p className="text-sm text-gray-600">Book with nutritionist</p>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full mt-4" disabled>
+              Coming Soon
+            </Button>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+          <div className="text-center py-8">
+            <p className="text-gray-500">No recent activity to display.</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Start using our safety check feature to see your activity here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
